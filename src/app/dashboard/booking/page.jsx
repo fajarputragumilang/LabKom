@@ -18,13 +18,43 @@ export default function BookingPage() {
     waktuSelesai: "",
   });
 
-  useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user) {
-      window.location.href = "/login";
-      return;
+  // 1. PINDAHKAN: Fungsi fetchBookings diletakkan di atas sebelum digunakan oleh useEffect
+  const fetchBookings = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/booking");
+      const data = await res.json();
+      setBookings(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Gagal load data", error);
+    } finally {
+      setLoading(false);
     }
-    setCurrentUser(user);
+  };
+
+  // 2. PERBAIKAN: Hapus auto-redirect ke /login dan gunakan fallback ke Cookie
+  useEffect(() => {
+    let sessionData = null;
+
+    try {
+      const localData = localStorage.getItem("user");
+      if (localData && localData !== "undefined") sessionData = localData;
+    } catch (e) {}
+
+    if (!sessionData) {
+      const cookies = document.cookie.split(";");
+      const userCookie = cookies.find((c) =>
+        c.trim().startsWith("session_user="),
+      );
+      if (userCookie)
+        sessionData = decodeURIComponent(userCookie.split("=")[1]);
+    }
+
+    if (sessionData) {
+      setCurrentUser(JSON.parse(sessionData));
+    }
+
+    // Panggil fetch data secara aman
     fetchBookings();
   }, []);
 
@@ -35,18 +65,6 @@ export default function BookingPage() {
       user.username === "fajarputragumilang" ||
       user.role === "ADMIN"
     );
-  };
-
-  const fetchBookings = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/booking");
-      const data = await res.json();
-      setBookings(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Gagal load data", error);
-    }
-    setLoading(false);
   };
 
   const handleSubmit = async (e) => {

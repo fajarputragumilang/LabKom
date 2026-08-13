@@ -2,48 +2,43 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 export default function DashboardHome() {
   const [user, setUser] = useState(null);
-  const [mounted, setMounted] = useState(false);
-  const router = useRouter(); // Gunakan router bawaan Next.js
 
   useEffect(() => {
-    setMounted(true);
+    let sessionData = null;
+    try {
+      const localData = localStorage.getItem("user");
+      if (localData && localData !== "undefined") sessionData = localData;
+    } catch (e) {}
 
-    const storedUser = localStorage.getItem("user");
-    if (storedUser && storedUser !== "undefined") {
-      try {
-        const parsed = JSON.parse(storedUser);
-        if (parsed?.id) {
-          setUser(parsed);
-          // Bersihkan URL dari parameter cache-buster agar terlihat rapi
-          window.history.replaceState(null, "", "/dashboard");
-        } else {
-          router.replace("/login");
-        }
-      } catch {
-        router.replace("/login");
-      }
-    } else {
-      router.replace("/login");
+    if (!sessionData) {
+      const cookies = document.cookie.split(";");
+      const userCookie = cookies.find((c) =>
+        c.trim().startsWith("session_user="),
+      );
+      if (userCookie)
+        sessionData = decodeURIComponent(userCookie.split("=")[1]);
     }
-  }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    router.replace("/login");
+    if (sessionData) setUser(JSON.parse(sessionData));
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch("/api/logout", { method: "POST" });
+    try {
+      localStorage.removeItem("user");
+    } catch (e) {}
+    window.location.href = "/login";
   };
 
-  // Mencegah hydration error dengan menahan render
-  if (!mounted || !user) {
+  if (!user)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-500 font-medium">
-        Memverifikasi sesi dashboard...
+      <div className="min-h-screen flex items-center justify-center font-semibold text-gray-500 bg-gray-50">
+        Menyiapkan Dashboard...
       </div>
     );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -62,7 +57,7 @@ export default function DashboardHome() {
           </div>
           <button
             onClick={handleLogout}
-            className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 px-4 py-2 rounded-lg font-semibold transition cursor-pointer"
+            className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 px-4 py-2 rounded-lg font-semibold"
           >
             Logout
           </button>
@@ -79,7 +74,7 @@ export default function DashboardHome() {
             </p>
             <Link
               href="/dashboard/booking"
-              className="inline-block w-full text-center bg-blue-600 text-white font-bold px-4 py-3 rounded-lg hover:bg-blue-700 transition shadow-sm"
+              className="inline-block w-full text-center bg-blue-600 text-white font-bold px-4 py-3 rounded-lg hover:bg-blue-700 transition"
             >
               Buka Modul Booking &rarr;
             </Link>

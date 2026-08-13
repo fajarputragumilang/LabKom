@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
 
-// Endpoint untuk logout: menghapus cookie sesi
-export async function GET() {
-  const response = NextResponse.json({
-    success: true,
-    message: "Logout berhasil",
-  });
-  response.cookies.set("auth_username", "", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+export async function POST() {
+  const response = NextResponse.json(
+    { message: "Logout berhasil" },
+    { status: 200 },
+  );
+
+  // Hancurkan Server Cookie
+  response.cookies.set({
+    name: "session_user",
+    value: "",
     path: "/",
-    maxAge: 0, // langsung hapus cookie
+    maxAge: 0,
   });
+
   return response;
 }

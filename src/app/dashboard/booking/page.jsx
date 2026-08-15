@@ -18,7 +18,6 @@ export default function BookingPage() {
     waktuSelesai: "",
   });
 
-  // 1. PINDAHKAN: Fungsi fetchBookings diletakkan di atas sebelum digunakan oleh useEffect
   const fetchBookings = async () => {
     setLoading(true);
     try {
@@ -32,7 +31,6 @@ export default function BookingPage() {
     }
   };
 
-  // 2. PERBAIKAN: Hapus auto-redirect ke /login dan gunakan fallback ke Cookie
   useEffect(() => {
     let sessionData = null;
 
@@ -54,7 +52,6 @@ export default function BookingPage() {
       setCurrentUser(JSON.parse(sessionData));
     }
 
-    // Panggil fetch data secara aman
     fetchBookings();
   }, []);
 
@@ -67,6 +64,7 @@ export default function BookingPage() {
     );
   };
 
+  // --- LOGIKA EDIT & BUAT BARU ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     const url = formData.id ? `/api/booking/${formData.id}` : "/api/booking";
@@ -86,53 +84,37 @@ export default function BookingPage() {
 
     const result = await res.json();
     if (res.ok) {
-      alert(result.message);
+      alert(result.message || "Data berhasil disimpan");
       setIsModalOpen(false);
       fetchBookings();
     } else {
-      alert(result.error);
+      alert(result.error || "Terjadi kesalahan");
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus/menolak pemesanan ini?"))
+  // --- LOGIKA ACCEPT & REJECT TERPUSAT ---
+  const handleStatusUpdate = async (id, newStatus) => {
+    const actionText = newStatus === "APPROVED" ? "menyetujui" : "menolak";
+    if (!confirm(`Apakah Anda yakin ingin ${actionText} pemesanan ini?`))
       return;
 
-    const res = await fetch(`/api/booking/${id}`, {
-      method: "DELETE",
-      headers: {
-        "x-user-id": currentUser.id,
-        "x-username": currentUser.username,
-        "x-user-role": currentUser.role || "",
-      },
-    });
+    try {
+      const res = await fetch(`/api/booking/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
 
-    if (res.ok) {
-      alert("Data booking berhasil dibersihkan dari database.");
-      fetchBookings();
-    } else {
       const result = await res.json();
-      alert(result.error);
-    }
-  };
-
-  const handleApprove = async (id) => {
-    if (!confirm("Setujui peminjaman lab ini?")) return;
-
-    const res = await fetch(`/api/booking/${id}/approve`, {
-      method: "PATCH",
-      headers: {
-        "x-username": currentUser.username,
-        "x-user-role": currentUser.role || "",
-      },
-    });
-
-    if (res.ok) {
-      alert("Booking disetujui (APPROVED)!");
-      fetchBookings();
-    } else {
-      const result = await res.json();
-      alert(result.error);
+      if (res.ok) {
+        alert(`Pemesanan berhasil di-${newStatus}`);
+        fetchBookings();
+      } else {
+        alert(result.error || "Gagal mengubah status");
+      }
+    } catch (error) {
+      console.error("Error update status:", error);
+      alert("Terjadi kesalahan pada sistem.");
     }
   };
 
@@ -157,6 +139,13 @@ export default function BookingPage() {
       });
     }
     setIsModalOpen(true);
+  };
+
+  // Helper Warna Status
+  const getStatusStyle = (status) => {
+    if (status === "APPROVED") return "bg-green-100 text-green-700";
+    if (status === "REJECTED") return "bg-red-100 text-red-700";
+    return "bg-yellow-100 text-yellow-700"; // PENDING
   };
 
   if (!currentUser)
@@ -221,22 +210,23 @@ export default function BookingPage() {
                   </td>
                   <td className="p-4 border-b">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold ${b.status === "APPROVED" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}
+                      className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusStyle(b.status)}`}
                     >
-                      {b.status}
+                      {b.status || "PENDING"}
                     </span>
                   </td>
                   <td className="p-4 border-b flex justify-center flex-wrap gap-2">
-                    {userIsAdmin && b.status === "PENDING" && (
+                    {/* KHUSUS ADMIN & STATUS PENDING: Action Accept/Reject */}
+                    {userIsAdmin && (b.status === "PENDING" || !b.status) && (
                       <>
                         <button
-                          onClick={() => handleApprove(b.id)}
+                          onClick={() => handleStatusUpdate(b.id, "APPROVED")}
                           className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm shadow"
                         >
                           Accept
                         </button>
                         <button
-                          onClick={() => handleDelete(b.id)}
+                          onClick={() => handleStatusUpdate(b.id, "REJECTED")}
                           className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm shadow"
                         >
                           Tolak
@@ -244,23 +234,14 @@ export default function BookingPage() {
                       </>
                     )}
 
+                    {/* HAK AKSES EDIT: Bisa dilakukan Admin ATAU Pembuat Booking */}
                     {(userIsAdmin || b.userId === currentUser.id) && (
-                      <>
-                        <button
-                          onClick={() => openModal(b)}
-                          className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm shadow"
-                        >
-                          Edit
-                        </button>
-                        {(userIsAdmin || b.status === "PENDING") && (
-                          <button
-                            onClick={() => handleDelete(b.id)}
-                            className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 text-sm shadow"
-                          >
-                            Hapus
-                          </button>
-                        )}
-                      </>
+                      <button
+                        onClick={() => openModal(b)}
+                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm shadow"
+                      >
+                        Edit
+                      </button>
                     )}
                   </td>
                 </tr>
@@ -277,6 +258,7 @@ export default function BookingPage() {
         </div>
       )}
 
+      {/* MODAL FORM EDIT / BUAT BARU */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg">

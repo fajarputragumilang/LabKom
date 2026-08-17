@@ -20,8 +20,13 @@ async function getUserSession() {
 export async function PUT(request, { params }) {
   try {
     const userSession = await getUserSession();
-    if (!userSession)
-      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+
+    if (!userSession) {
+      return NextResponse.json(
+        { error: "Unauthorized. Harap login terlebih dahulu." },
+        { status: 401 },
+      );
+    }
 
     const isUserAdmin =
       ADMIN_USERS.includes(userSession.username) ||
@@ -30,14 +35,15 @@ export async function PUT(request, { params }) {
     const { id } = resolvedParams;
     const body = await request.json();
 
+    // Validasi Accept/Reject (Hanya Admin)
     if (body.status && !isUserAdmin) {
       return NextResponse.json(
-        { error: "Forbidden. Hanya Admin yang dapat (Accept/Reject)." },
+        { error: "Forbidden. Hanya Admin yang dapat memberikan keputusan." },
         { status: 403 },
       );
     }
 
-    // REQ #4: Mandatory Reject Reason Validation di Backend
+    // Validasi Mandatory Reject Reason
     if (
       body.status === "REJECTED" &&
       (!body.rejectReason || body.rejectReason.trim() === "")
@@ -48,27 +54,37 @@ export async function PUT(request, { params }) {
       );
     }
 
+    // Cek eksistensi data
     const existingBooking = await prisma.booking.findUnique({
       where: { id: String(id) },
     });
-    if (!existingBooking)
+    if (!existingBooking) {
       return NextResponse.json(
         { error: "Pemesanan tidak ditemukan." },
         { status: 404 },
       );
+    }
 
+    // PERBAIKAN BUG EDIT: Susun payload data yang aman & konversi tanggal ke ISO Date
+    let updateData = {};
+    if (body.ruangan) updateData.ruangan = body.ruangan;
+    if (body.tujuan) updateData.tujuan = body.tujuan;
+    if (body.tanggal) updateData.tanggal = new Date(body.tanggal); // Format ulang ke Date()
+    if (body.waktuMulai) updateData.waktuMulai = body.waktuMulai;
+    if (body.waktuSelesai) updateData.waktuSelesai = body.waktuSelesai;
+    if (body.status) updateData.status = body.status;
+
+    // Logic penanganan Reason
+    if (body.status === "REJECTED") {
+      updateData.rejectReason = body.rejectReason;
+    } else if (body.status === "APPROVED" || body.status === "PENDING") {
+      updateData.rejectReason = null; // Hapus reason jika status berubah selain rejected
+    }
+
+    // Eksekusi Update ke Database
     const updatedBooking = await prisma.booking.update({
       where: { id: String(id) },
-      data: {
-        ...body,
-        // Hapus reason jika status diubah dari Rejected ke status lain (opsional)
-        rejectReason:
-          body.status === "REJECTED"
-            ? body.rejectReason
-            : body.status
-              ? null
-              : existingBooking.rejectReason,
-      },
+      data: updateData, // Gunakan updateData yang sudah di-filter
     });
 
     return NextResponse.json(
@@ -76,8 +92,9 @@ export async function PUT(request, { params }) {
       { status: 200 },
     );
   } catch (error) {
+    console.error("ERROR PUT /api/booking/[id]:", error);
     return NextResponse.json(
-      { error: "Terjadi kesalahan pada server" },
+      { error: "Terjadi kesalahan pada server", details: error.message },
       { status: 500 },
     );
   }

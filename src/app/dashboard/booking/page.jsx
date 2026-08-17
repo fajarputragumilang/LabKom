@@ -1,4 +1,4 @@
-// File: src/app/dashboard/booking/page.jsx
+// Lokasi: /src/app/dashboard/booking/page.jsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,8 +8,9 @@ export default function BookingPage() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-  const [currentTime, setCurrentTime] = useState(new Date()); // State realtime untuk Req #6
+  const [currentTime, setCurrentTime] = useState(new Date());
 
+  // State Form Edit/Create
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     id: "",
@@ -19,6 +20,13 @@ export default function BookingPage() {
     waktuMulai: "",
     waktuSelesai: "",
   });
+
+  // --- NEW: State untuk Modal Reject ---
+  const [rejectModal, setRejectModal] = useState({
+    isOpen: false,
+    bookingId: "",
+  });
+  const [rejectReason, setRejectReason] = useState("");
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -53,8 +61,7 @@ export default function BookingPage() {
 
     fetchBookings();
 
-    // Req #6: Interval untuk mengupdate UI status setiap detik/menit
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000); // update tiap 60 detik
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
 
@@ -67,7 +74,6 @@ export default function BookingPage() {
     );
   };
 
-  // REQ #6: Logika Dynamic Time-Based Status
   const getDynamicStatus = (b) => {
     if (b.status === "REJECTED")
       return {
@@ -80,7 +86,6 @@ export default function BookingPage() {
         style: "bg-yellow-100 text-yellow-700 border-yellow-300",
       };
 
-    // Jika Status = APPROVED, bandingkan dengan waktu real-time
     const bookingDate = new Date(b.tanggal);
     const [startH, startM] = b.waktuMulai.split(":").map(Number);
     const [endH, endM] = b.waktuSelesai.split(":").map(Number);
@@ -130,20 +135,10 @@ export default function BookingPage() {
     }
   };
 
-  const handleStatusUpdate = async (id, newStatus) => {
+  // --- PERBAIKAN LOGIC STATUS (Pemisahan Execute & Handler) ---
+  const executeStatusUpdate = async (id, newStatus, reason = null) => {
     let payload = { status: newStatus };
-
-    // REQ #4: Mandatory Reject Reason Prompt
-    if (newStatus === "REJECTED") {
-      const reason = prompt("Mohon masukkan alasan penolakan jadwal (Wajib):");
-      if (!reason || reason.trim() === "") {
-        alert("Aksi dibatalkan. Alasan penolakan wajib diisi!");
-        return;
-      }
-      payload.rejectReason = reason;
-    } else {
-      if (!confirm("Apakah Anda yakin menyetujui pemesanan ini?")) return;
-    }
+    if (reason) payload.rejectReason = reason;
 
     try {
       const res = await fetch(`/api/booking/${id}`, {
@@ -164,10 +159,34 @@ export default function BookingPage() {
     }
   };
 
-  // REQ #5: Fitur Cancel / Hard Delete
+  const handleStatusUpdate = (id, newStatus) => {
+    if (newStatus === "REJECTED") {
+      // Buka Modal Reject alih-alih menggunakan prompt()
+      setRejectModal({ isOpen: true, bookingId: id });
+      setRejectReason("");
+      return;
+    } else {
+      if (!window.confirm("Apakah Anda yakin menyetujui pemesanan ini?"))
+        return;
+      executeStatusUpdate(id, newStatus);
+    }
+  };
+
+  const handleRejectSubmit = (e) => {
+    e.preventDefault();
+    if (!rejectReason || rejectReason.trim() === "") {
+      alert("Alasan penolakan wajib diisi!");
+      return;
+    }
+    // Eksekusi API reject dengan alasan
+    executeStatusUpdate(rejectModal.bookingId, "REJECTED", rejectReason);
+    setRejectModal({ isOpen: false, bookingId: "" }); // Tutup modal
+  };
+  // -------------------------------------------------------------
+
   const handleCancel = async (id) => {
     if (
-      !confirm(
+      !window.confirm(
         "⚠️ PERINGATAN: Apakah Anda yakin ingin membatalkan dan MENGHAPUS pesanan ini secara permanen?",
       )
     )
@@ -298,21 +317,26 @@ export default function BookingPage() {
                         ⌚ {b.waktuMulai} - {b.waktuSelesai}
                       </div>
                     </td>
-                    <td className="p-4 text-center">
-                      <div
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-extrabold border ${statusBadge.style}`}
-                      >
-                        {statusBadge.text}
-                      </div>
-                      {/* UI Reason Reject Req #4 */}
-                      {b.status === "REJECTED" && b.rejectReason && (
-                        <div className="mt-2 text-xs text-red-600 bg-red-50 p-2 rounded text-left whitespace-normal leading-tight border border-red-100 shadow-sm">
-                          <strong>Alasan:</strong> {b.rejectReason}
+                    <td className="p-4 align-middle">
+                      <div className="flex flex-col items-center justify-center gap-1.5">
+                        {b.status === "APPROVED" && (
+                          <div className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-extrabold bg-green-100 text-green-800 border border-green-400 shadow-sm uppercase tracking-wide">
+                            ✔️ APPROVED
+                          </div>
+                        )}
+                        <div
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${statusBadge.style}`}
+                        >
+                          {statusBadge.text}
                         </div>
-                      )}
+                        {b.status === "REJECTED" && b.rejectReason && (
+                          <div className="mt-1 text-xs text-red-600 bg-red-50 p-2 rounded text-left whitespace-normal leading-tight border border-red-100 shadow-sm w-full max-w-[150px]">
+                            <strong>Alasan:</strong> {b.rejectReason}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="p-4 border-b flex justify-center items-center flex-wrap gap-2">
-                      {/* ACTION ADMIN: ACCEPT/REJECT */}
                       {userIsAdmin && b.status === "PENDING" && (
                         <>
                           <button
@@ -329,8 +353,6 @@ export default function BookingPage() {
                           </button>
                         </>
                       )}
-
-                      {/* ACTION USER/ADMIN: EDIT */}
                       {(userIsAdmin || b.userId === currentUser.id) && (
                         <button
                           onClick={() => openModal(b)}
@@ -339,8 +361,6 @@ export default function BookingPage() {
                           Edit
                         </button>
                       )}
-
-                      {/* REQ #5 ACTION USER/ADMIN: CANCEL (DELETE) */}
                       {(userIsAdmin || b.userId === currentUser.id) && (
                         <button
                           onClick={() => handleCancel(b.id)}
@@ -370,6 +390,49 @@ export default function BookingPage() {
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* --- MODAL INPUT REJECT REASON --- */}
+      {rejectModal.isOpen && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md animate-fade-in-up">
+            <h2 className="text-xl font-extrabold mb-4 text-red-600 border-b pb-3">
+              ❌ Alasan Penolakan
+            </h2>
+            <form onSubmit={handleRejectSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Mohon masukkan alasan penolakan jadwal (Wajib):
+                </label>
+                <textarea
+                  required
+                  rows="3"
+                  className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-gray-50"
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Contoh: Lab sedang dalam perbaikan jaringan..."
+                />
+              </div>
+              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setRejectModal({ isOpen: false, bookingId: "" })
+                  }
+                  className="px-4 py-2 bg-gray-200 text-gray-800 font-bold rounded-lg hover:bg-gray-300 transition"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition shadow-md"
+                >
+                  Tolak Jadwal
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

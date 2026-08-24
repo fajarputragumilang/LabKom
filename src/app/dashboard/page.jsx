@@ -46,7 +46,7 @@ export default function DashboardPage() {
       color: "text-success",
       bg: "bg-green-50",
     },
-    //disesuikan dengan database 
+    //disesuikan dengan database
     {
       title: "Pemesanan Hari Ini",
       value: "6",
@@ -58,7 +58,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="w-full font-poppins animate-fade-in">
+    <div className="w-full font-poppins animate-fade-in p-4">
       {/* Header Halaman */}
       <div className="mb-6 lg:mb-8">
         <h1 className="text-2xl lg:text-3xl font-bold text-primary mb-1">

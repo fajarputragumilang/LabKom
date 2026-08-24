@@ -15,7 +15,7 @@ import {
   MdLogout,
   MdNotificationsNone,
 } from "react-icons/md";
-import { FaUser, FaLock } from "react-icons/fa6";
+import { FaUser } from "react-icons/fa6";
 
 // Konfigurasi Navigasi
 const MENU_ITEMS = [
@@ -32,13 +32,11 @@ export default function DashboardLayout({ children }) {
   const router = useRouter();
   const [user, setUser] = useState(null);
 
-  // Ambil data user dari LocalStorage saat render pertama
   useEffect(() => {
     const userData = localStorage.getItem("user");
     if (userData) {
       setUser(JSON.parse(userData));
     } else {
-      // Jika tidak ada sesi, tendang kembali ke login
       router.push("/login");
     }
   }, [router]);
@@ -50,20 +48,18 @@ export default function DashboardLayout({ children }) {
 
   const isActive = (path) => pathname === path;
 
-  // Render null sementara mengecek sesi agar tidak ada kedipan (flicker)
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] font-poppins flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-gray-50 font-poppins flex flex-col lg:flex-row">
       {/* 
         =========================================
         SIDEBAR (KHUSUS DESKTOP)
         =========================================
       */}
       <aside className="hidden lg:flex flex-col w-64 bg-primary min-h-screen fixed left-0 top-0 text-white z-20">
-        {/* Header Sidebar (Logo & Nama Aplikasi) */}
-        <div className="h-24 flex items-center px-6 gap-3">
-          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-1 shadow-md">
+        <div className="h-24 flex items-center px-6 gap-3 border-b border-white/10">
+          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-1 shadow-md shrink-0">
             <div className="relative w-full h-full">
               <Image
                 src="/LOGODB.png"
@@ -82,8 +78,7 @@ export default function DashboardLayout({ children }) {
           </div>
         </div>
 
-        {/* Menu List */}
-        <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
           {MENU_ITEMS.map((item) => (
             <Link key={item.name} href={item.path}>
               <div
@@ -100,11 +95,11 @@ export default function DashboardLayout({ children }) {
           ))}
         </nav>
 
-        {/* Logout Button di bawah */}
-        <div className="p-4">
+        {/* Tombol Logout Desktop */}
+        <div className="p-4 border-t border-white/10">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 bg-danger hover:bg-red-700 text-white py-3 rounded-lg transition-colors font-semibold text-sm"
+            className="w-full flex items-center justify-center gap-2 bg-danger hover:bg-red-700 text-white py-3 rounded-lg transition-colors font-semibold text-sm shadow-md"
           >
             <MdLogout className="text-lg" />
             <span>Logout</span>
@@ -116,10 +111,21 @@ export default function DashboardLayout({ children }) {
         =========================================
         HEADER MOBILE (KHUSUS MOBILE)
         =========================================
+        Header ini akan selalu membungkus halaman apa pun yang sedang dibuka di Mobile
       */}
-      <header className="lg:hidden fixed top-0 w-full bg-primary h-16 flex items-center justify-between px-4 z-30 shadow-md">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1">
+      <header className="lg:hidden fixed top-0 w-full bg-primary h-16 flex items-center justify-between px-3 z-30 shadow-md">
+        <div className="flex items-center gap-1.5 overflow-hidden">
+          {/* TOMBOL LOGOUT MOBILE */}
+          <button
+            onClick={handleLogout}
+            className="shrink-0 p-2 text-white hover:bg-white/20 rounded-full transition-colors"
+            title="Logout"
+          >
+            <MdLogout className="text-2xl rotate-180" />
+          </button>
+
+          {/* Logo Mobile */}
+          <div className="shrink-0 w-9 h-9 bg-white rounded-full flex items-center justify-center p-1">
             <div className="relative w-full h-full">
               <Image
                 src="/LOGODB.png"
@@ -129,22 +135,23 @@ export default function DashboardLayout({ children }) {
               />
             </div>
           </div>
-          <div className="flex flex-col text-white">
-            <span className="font-bold text-sm leading-tight">
+
+          <div className="flex flex-col text-white ml-1 overflow-hidden">
+            <span className="font-bold text-sm leading-tight truncate">
               Lab Komputer
             </span>
-            <span className="text-[10px] text-white/70">Sistem Pemesanan</span>
+            <span className="text-[10px] text-white/70 truncate">
+              SMKS Doa Bangsa
+            </span>
           </div>
         </div>
 
-        {/* Profile & Bell (Mobile) */}
-        <div className="flex items-center gap-3 text-white">
+        <div className="flex items-center gap-3 text-white shrink-0">
           <button className="relative p-1">
             <MdNotificationsNone className="text-2xl" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-danger rounded-full"></span>
           </button>
           <div className="w-8 h-8 bg-white/20 rounded-full border border-white/40 overflow-hidden flex items-center justify-center">
-            {/* Bisa diganti avatar asli jika ada */}
             <FaUser className="text-white text-sm" />
           </div>
         </div>
@@ -155,33 +162,34 @@ export default function DashboardLayout({ children }) {
         MAIN CONTENT AREA
         =========================================
       */}
-      {/* lg:ml-64 untuk memberi ruang bagi sidebar desktop. pt-16 untuk ruang header mobile. pb-20 untuk ruang bottom nav mobile */}
       <main className="flex-1 flex flex-col lg:ml-64 pt-16 lg:pt-0 pb-20 lg:pb-0 min-h-screen">
         {/* Topbar Kanan (KHUSUS DESKTOP) */}
-        <div className="hidden lg:flex justify-end items-center px-8 h-20">
+        <div className="hidden lg:flex justify-end items-center px-8 h-24 border-b border-gray-200 bg-white">
           <div className="flex items-center gap-5">
-            <button className="relative text-grey hover:text-primary transition-colors">
+            <button className="relative text-gray-400 hover:text-primary transition-colors">
               <MdNotificationsNone className="text-2xl" />
-              <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-danger rounded-full border-2 border-[#F8F9FA]"></span>
+              <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-danger rounded-full border-2 border-white"></span>
             </button>
-            <div className="flex items-center gap-3 pl-4 border-l border-gray-300 cursor-pointer hover:bg-gray-100 p-2 rounded-full transition-colors">
+            <div className="flex items-center gap-3 pl-5 border-l border-gray-300 cursor-pointer hover:bg-gray-50 p-2 rounded-full transition-colors">
               <div className="flex flex-col text-right">
-                <span className="text-sm font-bold text-black-80">
+                <span className="text-sm font-bold text-gray-800 truncate max-w-[150px]">
                   {user.username}
                 </span>
-                <span className="text-xs text-grey capitalize">
+                <span className="text-xs text-gray-500 capitalize">
                   {user.role || "User"}
                 </span>
               </div>
-              <div className="w-10 h-10 bg-gray-200 rounded-full border border-gray-300 overflow-hidden flex items-center justify-center">
-                <FaUser className="text-gray-500 text-lg" />
+              <div className="w-10 h-10 bg-gray-100 rounded-full border border-gray-300 overflow-hidden flex items-center justify-center shadow-sm shrink-0">
+                <FaUser className="text-gray-400 text-lg" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Konten Utama Halaman (Di-render dari page.jsx) */}
-        <div className="p-4 sm:p-6 lg:px-8 flex-1">{children}</div>
+        {/* 
+          Di sinilah halaman seperti Dashboard Utama, Booking, Laporan, dll akan dirender secara dinamis 
+        */}
+        <div className="flex-1">{children}</div>
       </main>
 
       {/* 
@@ -206,10 +214,9 @@ export default function DashboardLayout({ children }) {
               className={`flex flex-col items-center justify-center w-full space-y-1 ${
                 isActive(item.path) ||
                 (item.path === "/dashboard/settings" &&
-                  (isActive("/dashboard/reports") ||
-                    isActive("/dashboard/settings")))
+                  isActive("/dashboard/reports"))
                   ? "text-primary"
-                  : "text-grey hover:text-primary"
+                  : "text-gray-400 hover:text-primary"
               }`}
             >
               <item.icon className="text-2xl" />

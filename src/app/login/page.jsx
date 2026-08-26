@@ -3,9 +3,9 @@
 
 import { useState } from "react";
 import Image from "next/image";
-// useRouter tetap di-import jaga-jaga jika butuh, tapi kita akan pakai window.location.href sesuai logic awalmu
 import { useRouter } from "next/navigation";
-import { FaUser, FaLock } from "react-icons/fa6";
+import { FaUser, FaLock, FaSquareInstagram, FaYoutube, FaGlobe } from "react-icons/fa6";
+import { FaFacebookSquare } from "react-icons/fa";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -64,22 +64,21 @@ export default function LoginPage() {
   };
 
   return (
-    // Pembungkus utama diset ke bg-white untuk memberi warna dasar pada sisi kiri (Desktop)
     <div className="min-h-screen flex w-full font-poppins bg-white">
       {/* 
         =========================================
         KIRI: ILUSTRASI & WELCOME (KHUSUS DESKTOP)
         =========================================
       */}
-      <div className="hidden lg:flex w-1/2 flex-col justify-center items-center bg-white relative p-10">
+      <div className="hidden lg:flex w-1/2 flex-col justify-center items-center bg-white relative">
         <div className="w-full max-w-md text-center flex flex-col items-center">
           {/* Menggunakan file desktop.svg */}
-          <div className="relative w-[450px] h-[450px] mb-8">
+          <div className="relative w-[42rem] h-[42rem] md:w-[38rem] md:h-[38rem]">
             <Image
               src="/desktop.svg"
               alt="Login Illustration"
               fill
-              className="object-contain"
+              className=""
               priority
             />
           </div>
@@ -95,8 +94,8 @@ export default function LoginPage() {
       <div className="w-full lg:w-1/2 bg-primary flex flex-col justify-center items-center p-8 sm:p-12 md:p-20 relative min-h-screen overflow-hidden">
         <div className="w-full max-w-md flex flex-col items-center z-10">
           {/* Logo Instansi dengan Background Bulat Putih */}
-          <div className="mb-6 w-40 h-40 bg-white rounded-full flex items-center justify-center shadow-lg">
-            <div className="relative w-full h-full">
+          <div className="mb-6 w-28 h-28 md:w-32 md:h-32 bg-white rounded-full flex items-center justify-center shadow-lg ">
+            <div className="relative w-28 h-28 md:w-32 md:h-32 lg:w-full lg:h-full">
               <Image
                 src="/LOGODB.png"
                 alt="Logo SMKS Doa Bangsa"
@@ -109,10 +108,10 @@ export default function LoginPage() {
 
           {/* Garis Ornamen Putih (Sesuai Desain) */}
           <div className="w-full mb-8 flex flex-col items-center gap-2 text-white text-center">
-            <h2 className="text-xl font-semibold md:text-2xl">
+            <h2 className="text-16 font-semibold md:text-2xl">
               Sistem Pemesanan Lab Komputer
             </h2>
-            <h3 className="text-xl font-semibold md:text-2xl">
+            <h3 className="text-14 font-semibold md:text-xl">
               SMKS DOA BANGSA
             </h3>
           </div>
@@ -141,7 +140,7 @@ export default function LoginPage() {
                   value={formData.username}
                   onChange={handleChange}
                   placeholder="Username"
-                  className="w-full pl-12 pr-4 py-3.5 bg-transparent border-2 border-white rounded-md text-white placeholder-white focus:outline-none focus:ring-0 transition-all text-sm font-medium"
+                  className="w-full pl-12 pr-4 py-3.5 bg-transparent border-1 border-white rounded-md text-white placeholder-slate-300   focus:outline-none focus:ring-0 transition-all text-sm font-medium"
                   required
                 />
               </div>
@@ -151,7 +150,7 @@ export default function LoginPage() {
             <div className="flex flex-col space-y-2 w-full">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <FaLock className="text-white text-lg" />
+                  <FaLock className="text-white text-lg"/>
                 </div>
                 <input
                   type="password"
@@ -159,7 +158,7 @@ export default function LoginPage() {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Password"
-                  className="w-full pl-12 pr-4 py-3.5 bg-transparent border-2 border-white rounded-md text-white placeholder-white focus:outline-none focus:ring-0 transition-all text-sm font-medium"
+                  className="w-full pl-12 pr-4 py-3.5 bg-transparent border-1 border-white rounded-md text-white placeholder-slate-300 focus:outline-none focus:ring-0 transition-all text-sm font-medium"
                   required
                 />
               </div>
@@ -169,7 +168,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-1/2 py-3.5 mt-4 bg-white text-primary font-bold text-lg rounded-md shadow-lg hover:bg-gray-100 hover:scale-[1.02] focus:outline-none transition-all flex justify-center items-center disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed"
+              className="w-32 py-2 mt-2 opacity-100 md:opacity-85 hover:opacity-100 bg-white text-primary font-bold text-lg rounded-md shadow-lg hover:scale-[1.05] focus:outline-none transition-all flex justify-center items-center disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed hover:cursor-pointer"
             >
               {isLoading ? (
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
@@ -181,14 +180,14 @@ export default function LoginPage() {
         </div>
 
         {/* Ornamen Kotak Bawah */}
-        <div className="absolute bottom-8 w-full px-12 hidden lg:flex justify-between items-center z-0">
-          <div className="flex gap-2">
-            <div className="w-8 h-8 bg-white rounded-sm"></div>
-            <div className="w-8 h-8 bg-white rounded-sm"></div>
+        <div className="absolute bottom-8 w-full flex md:px-12 lg:flex justify-between items-center z-0 px-8">
+          <div className="flex gap-4">
+            <FaSquareInstagram className="w-8 h-8 md:opacity-85 md:hover:opacity-100 text-white cursor-pointer opacity-100" />
+            <FaFacebookSquare className="w-8 h-8 md:opacity-85 hover:opacity-100 text-white md:hover:cursor-pointer opacity-100" />
           </div>
-          <div className="flex gap-2">
-            <div className="w-8 h-8 bg-white rounded-sm"></div>
-            <div className="w-8 h-8 bg-white rounded-sm"></div>
+          <div className="flex gap-4">
+            <FaYoutube className="w-8 h-8 md:opacity-85 md:hover:opacity-100 text-white cursor-pointer opacity-100" />
+            <FaGlobe className="w-7 h-7 md:opacity-85 md:hover:opacity-100 text-white cursor-pointer opacity-100" />
           </div>
         </div>
       </div>

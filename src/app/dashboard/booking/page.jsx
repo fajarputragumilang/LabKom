@@ -280,7 +280,7 @@ export default function BookingPage() {
                       </div>
                     </div>
 
-                    {/* Content: Ruang & Tujuan */}
+                    {/* Content: Ruang & Tujuan */}  
                     <div className="flex flex-col gap-1.5">
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-gray-500">Ruangan</span>

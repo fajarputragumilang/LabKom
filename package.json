@@ -19,6 +19,13 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-icons": "^5.7.0"
+  }
+  ,
+  "allowScripts": {
+    "@prisma/client": true,
+    "@prisma/engines": true,
+    "prisma": true,
+    "unrs-resolver": true
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",

@@ -1,4 +1,3 @@
-// Lokasi: /src/app/dashboard/layout.jsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -29,6 +28,7 @@ const MENU_ITEMS = [
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
+  // PERBAIKAN 1: Aktifkan kembali useRouter karena dipanggil di dalam useEffect
   const router = useRouter();
   const [user, setUser] = useState(null);
 
@@ -37,13 +37,29 @@ export default function DashboardLayout({ children }) {
     if (userData) {
       setUser(JSON.parse(userData));
     } else {
+      // Jika router tidak didefinisikan, baris ini yang membuat Vercel blank screen (crash)
       router.push("/login");
     }
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    window.location.href = "/login";
+  // PERBAIKAN 2: Ubah ke async function dan pastikan memanggil API Logout
+  const handleLogout = async () => {
+    try {
+      // Hapus HTTP cookies di sisi server
+      await fetch("/api/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Hapus sesi lokal di client
+      localStorage.removeItem("user");
+      // Hard redirect untuk membersihkan memory React sepenuhnya
+      window.location.href = "/login";
+    }
   };
 
   const isActive = (path) => pathname === path;
@@ -111,7 +127,6 @@ export default function DashboardLayout({ children }) {
         =========================================
         HEADER MOBILE (KHUSUS MOBILE)
         =========================================
-        Header ini akan selalu membungkus halaman apa pun yang sedang dibuka di Mobile
       */}
       <header className="lg:hidden fixed top-0 w-full bg-primary h-16 flex items-center justify-between px-3 z-30 shadow-md">
         <div className="flex items-center gap-1.5 overflow-hidden">
@@ -186,9 +201,6 @@ export default function DashboardLayout({ children }) {
           </div>
         </div>
 
-        {/* 
-          Di sinilah halaman seperti Dashboard Utama, Booking, Laporan, dll akan dirender secara dinamis 
-        */}
         <div className="flex-1">{children}</div>
       </main>
 

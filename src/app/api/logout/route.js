@@ -1,18 +1,26 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export async function POST() {
-  const response = NextResponse.json(
-    { message: "Logout berhasil" },
-    { status: 200 },
-  );
+  try {
+    const cookieStore = cookies();
 
-  // Hancurkan Server Cookie
-  response.cookies.set({
-    name: "session_user",
-    value: "",
-    path: "/",
-    maxAge: 0,
-  });
+    // PERHATIAN: Pastikan 'token' adalah nama cookie yang kamu set saat user login.
+    // Jika saat login kamu menggunakan nama cookie lain (misal: 'session_id'), ganti 'token' di bawah ini.
+    cookieStore.delete("token");
 
-  return response;
+    // Opsional: Jika ada cookie role, hapus juga
+    // cookieStore.delete('role');
+
+    return NextResponse.json(
+      { success: true, message: "Logout berhasil, sesi telah dihapus" },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("Logout API Error:", error);
+    return NextResponse.json(
+      { success: false, error: "Terjadi kesalahan pada server saat logout" },
+      { status: 500 },
+    );
+  }
 }

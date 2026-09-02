@@ -51,7 +51,7 @@ export default function LoginPage() {
         // Delay 150ms untuk transisi yang cepat dan mulus
         setTimeout(() => {
           window.location.href = "/dashboard";
-        }, 150);
+        }, 120);
       } else {
         // Notifikasi error dipertahankan
         setError(data.error || "Login gagal, periksa kredensial Anda.");
@@ -78,7 +78,7 @@ export default function LoginPage() {
               src="/desktop.svg"
               alt="Login Illustration"
               fill
-              className=""
+              className="object-contain"
               priority
             />
           </div>
@@ -135,8 +135,8 @@ export default function LoginPage() {
                   <FaUser className="text-white text-lg" />
                 </div>
                 <input
-                  type="text" // Diubah menjadi text karena ini username
-                  name="username" // Name disesuaikan menjadi username
+                  type="text" 
+                  name="username" 
                   value={formData.username}
                   onChange={handleChange}
                   placeholder="Username"

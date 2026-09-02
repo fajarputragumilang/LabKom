@@ -142,7 +142,7 @@ export default function SchedulePage() {
         </p>
       </div>
 
-      <div className="flex items-center justify-between bg-white p-3 md:p-4 rounded-xl shadow-sm border border-gray-200 mb-6 mx-20 md:w-full md:mx-0 ">
+      <div className="flex items-center justify-between bg-white p-3 md:p-4 rounded-xl shadow-sm border border-gray-200 mb-6 mx-8 md:w-full md:mx-0 ">
         <button
           onClick={() => setWeekOffset((prev) => prev - 1)}
           className="p-2 bg-gray-300  text-gray-700 rounded-full transition-colors"

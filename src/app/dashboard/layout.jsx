@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   MdSpaceDashboard,
   MdEventNote,
@@ -27,59 +27,56 @@ const MENU_ITEMS = [
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [user, setUser] = useState(null);
-
-  // PERBAIKAN 1: Tambahkan state isLoading agar aplikasi tidak "nyangkut"
   const [isLoading, setIsLoading] = useState(true);
+
+  // FUNGSI PEMBERSIH SESI 3-LAPIS (SERVER & CLIENT)
+  const clearSessionAndRedirect = async () => {
+    try {
+      // Lapis 1: Hapus cookie dari server API (Gunakan cache: no-store agar Vercel tidak nge-cache request ini)
+      await fetch("/api/logout", { method: "POST", cache: "no-store" });
+    } catch (error) {
+      console.error("API Logout Error:", error);
+    } finally {
+      // Lapis 2: Hapus data dari LocalStorage
+      localStorage.removeItem("user");
+
+      // Lapis 3: Paksa hapus cookie dari sisi browser JS (Jaring pengaman)
+      document.cookie =
+        "session_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+      // Redirect tanpa menambah history perulangan
+      window.location.replace("/login");
+    }
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const userData = localStorage.getItem("user");
-
         if (userData) {
-          // JIKA BERHASIL: Set user dan matikan loading
           setUser(JSON.parse(userData));
-          setIsLoading(false);
+          setIsLoading(false); // Stop loading jika sukses
         } else {
-          // JIKA GAGAL (LocalStorage kosong tapi middleware lolos):
-          console.warn(
-            "Desinkronisasi sesi terdeteksi. Memaksa pembersihan cookie...",
-          );
-          await fetch("/api/logout", { method: "POST" });
-          window.location.href = "/login";
+          // Jika LocalStorage kosong, hancurkan sesi dan redirect
+          await clearSessionAndRedirect();
         }
       } catch (error) {
-        // JIKA JSON CORRUPT / ERROR LAINNYA:
-        console.error("Gagal mem-parsing data user", error);
-        localStorage.removeItem("user");
-        await fetch("/api/logout", { method: "POST" });
-        window.location.href = "/login";
+        console.error("Data corrupt:", error);
+        await clearSessionAndRedirect();
       }
-      // CATATAN: Blok finally dihilangkan agar tidak memicu auto-logout pada user yang valid
     };
 
     checkAuth();
-  }, []); // Dependensi kosong agar hanya berjalan sekali saat mount
+  }, []);
 
   const handleLogout = async () => {
-    setIsLoading(true); // Tampilkan loading saat proses logout
-    try {
-      await fetch("/api/logout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      localStorage.removeItem("user");
-      window.location.href = "/login";
-    }
+    setIsLoading(true); // Tampilkan spinner saat proses logout
+    await clearSessionAndRedirect();
   };
 
   const isActive = (path) => pathname === path;
 
-  // PERBAIKAN 2: Tampilkan UI Loading yang proper, jangan langsung return null
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
@@ -89,7 +86,6 @@ export default function DashboardLayout({ children }) {
     );
   }
 
-  // Jika tidak loading tapi user kosong (sedang proses redirect ke login)
   if (!user) return null;
 
   return (

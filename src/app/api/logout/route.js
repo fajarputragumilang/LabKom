@@ -1,29 +1,20 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 
 export async function POST() {
-  try {
-    const cookieStore = cookies();
+  // 1. Buat object response terlebih dahulu
+  const response = NextResponse.json(
+    { success: true, message: "Sesi berhasil dihapus secara total" },
+    { status: 200 },
+  );
 
-    // Hapus cookie secara agresif dengan menimpa masa aktifnya ke masa lalu
-    cookieStore.set("session_user", "", {
-      path: "/", // Wajib: agar terhapus di seluruh rute
-      expires: new Date(0), // Set waktu ke 1 Jan 1970
-      maxAge: 0,
-    });
+  // 2. Timpa cookie langsung pada header response (Cara paling ampuh di Vercel)
+  response.cookies.set({
+    name: "session_user",
+    value: "",
+    path: "/",
+    expires: new Date(0), // Set ke tahun 1970
+    maxAge: 0,
+  });
 
-    // Lapis kedua penghapusan native
-    cookieStore.delete("session_user");
-
-    return NextResponse.json(
-      { success: true, message: "Sesi berhasil dihapus secara total" },
-      { status: 200 },
-    );
-  } catch (error) {
-    console.error("Logout API Error:", error);
-    return NextResponse.json(
-      { success: false, error: "Terjadi kesalahan server saat logout" },
-      { status: 500 },
-    );
-  }
+  return response;
 }

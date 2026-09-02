@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
-
-export default function Home() {
-  // Langsung arahkan (redirect) ke halaman login saat web pertama kali dibuka
-  redirect("/login");
+// Lokasi: /src/app/page.js
+export default function HomePage() {
+  return null; // Tidak perlu isi, middleware sudah mengatur rutenya
 }

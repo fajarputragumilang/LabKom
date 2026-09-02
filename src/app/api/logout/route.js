@@ -5,21 +5,17 @@ export async function POST() {
   try {
     const cookieStore = cookies();
 
-    // PERHATIAN: Pastikan 'token' adalah nama cookie yang kamu set saat user login.
-    // Jika saat login kamu menggunakan nama cookie lain (misal: 'session_id'), ganti 'token' di bawah ini.
-    cookieStore.delete("token");
-
-    // Opsional: Jika ada cookie role, hapus juga
-    // cookieStore.delete('role');
+    // PERBAIKAN: Gunakan nama cookie yang sama persis dengan di middleware.js
+    cookieStore.delete("session_user");
 
     return NextResponse.json(
-      { success: true, message: "Logout berhasil, sesi telah dihapus" },
+      { success: true, message: "Sesi berhasil dihapus" },
       { status: 200 },
     );
   } catch (error) {
     console.error("Logout API Error:", error);
     return NextResponse.json(
-      { success: false, error: "Terjadi kesalahan pada server saat logout" },
+      { success: false, error: "Terjadi kesalahan server saat logout" },
       { status: 500 },
     );
   }

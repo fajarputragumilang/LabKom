@@ -16,7 +16,6 @@ import {
 } from "react-icons/md";
 import { FaUser } from "react-icons/fa6";
 
-// Konfigurasi Navigasi
 const MENU_ITEMS = [
   { name: "Dashboard", path: "/dashboard", icon: MdSpaceDashboard },
   { name: "Pemesanan", path: "/dashboard/booking", icon: MdEventNote },
@@ -28,51 +27,67 @@ const MENU_ITEMS = [
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
-  // PERBAIKAN 1: Aktifkan kembali useRouter karena dipanggil di dalam useEffect
   const router = useRouter();
   const [user, setUser] = useState(null);
 
+  // PERBAIKAN 1: Tambahkan state isLoading agar aplikasi tidak "nyangkut"
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      setUser(JSON.parse(userData));
-    } else {
-      // Jika router tidak didefinisikan, baris ini yang membuat Vercel blank screen (crash)
-      router.push("/login");
-    }
+    const checkAuth = () => {
+      try {
+        const userData = localStorage.getItem("user");
+        if (userData) {
+          setUser(JSON.parse(userData));
+        } else {
+          // Gunakan replace agar history browser tidak menumpuk
+          router.replace("/login");
+        }
+      } catch (error) {
+        console.error("Gagal mem-parsing data user", error);
+        localStorage.removeItem("user");
+        router.replace("/login");
+      } finally {
+        setIsLoading(false); // Matikan loading setelah pengecekan selesai
+      }
+    };
+
+    checkAuth();
   }, [router]);
 
-  // PERBAIKAN 2: Ubah ke async function dan pastikan memanggil API Logout
   const handleLogout = async () => {
+    setIsLoading(true); // Tampilkan loading saat proses logout
     try {
-      // Hapus HTTP cookies di sisi server
       await fetch("/api/logout", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      // Hapus sesi lokal di client
       localStorage.removeItem("user");
-      // Hard redirect untuk membersihkan memory React sepenuhnya
       window.location.href = "/login";
     }
   };
 
   const isActive = (path) => pathname === path;
 
+  // PERBAIKAN 2: Tampilkan UI Loading yang proper, jangan langsung return null
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <span className="mt-4 text-gray-600 font-medium">Memuat sistem...</span>
+      </div>
+    );
+  }
+
+  // Jika tidak loading tapi user kosong (sedang proses redirect ke login)
   if (!user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 font-poppins flex flex-col lg:flex-row">
-      {/* 
-        =========================================
-        SIDEBAR (KHUSUS DESKTOP)
-        =========================================
-      */}
+      {/* SIDEBAR (DESKTOP) */}
       <aside className="hidden lg:flex flex-col w-64 bg-primary min-h-screen fixed left-0 top-0 text-white z-20">
         <div className="h-24 flex items-center px-6 gap-3 border-b border-white/10">
           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-1 shadow-md shrink-0">
@@ -111,7 +126,6 @@ export default function DashboardLayout({ children }) {
           ))}
         </nav>
 
-        {/* Tombol Logout Desktop */}
         <div className="p-4 border-t border-white/10">
           <button
             onClick={handleLogout}
@@ -123,14 +137,9 @@ export default function DashboardLayout({ children }) {
         </div>
       </aside>
 
-      {/* 
-        =========================================
-        HEADER MOBILE (KHUSUS MOBILE)
-        =========================================
-      */}
+      {/* HEADER MOBILE */}
       <header className="lg:hidden fixed top-0 w-full bg-primary h-16 flex items-center justify-between px-3 z-30 shadow-md">
         <div className="flex items-center gap-1.5 overflow-hidden">
-          {/* TOMBOL LOGOUT MOBILE */}
           <button
             onClick={handleLogout}
             className="shrink-0 p-2 text-white hover:bg-white/20 rounded-full transition-colors"
@@ -139,7 +148,6 @@ export default function DashboardLayout({ children }) {
             <MdLogout className="text-2xl rotate-180" />
           </button>
 
-          {/* Logo Mobile */}
           <div className="shrink-0 w-9 h-9 bg-white rounded-full flex items-center justify-center p-1">
             <div className="relative w-full h-full">
               <Image
@@ -172,13 +180,8 @@ export default function DashboardLayout({ children }) {
         </div>
       </header>
 
-      {/* 
-        =========================================
-        MAIN CONTENT AREA
-        =========================================
-      */}
+      {/* MAIN CONTENT AREA */}
       <main className="flex-1 flex flex-col lg:ml-64 pt-16 lg:pt-0 pb-20 lg:pb-0 min-h-screen">
-        {/* Topbar Kanan (KHUSUS DESKTOP) */}
         <div className="hidden lg:flex justify-end items-center px-8 h-24 border-b border-gray-200 bg-white">
           <div className="flex items-center gap-5">
             <button className="relative text-gray-400 hover:text-primary transition-colors">
@@ -204,11 +207,7 @@ export default function DashboardLayout({ children }) {
         <div className="flex-1">{children}</div>
       </main>
 
-      {/* 
-        =========================================
-        BOTTOM NAVIGATION (KHUSUS MOBILE)
-        =========================================
-      */}
+      {/* BOTTOM NAVIGATION MOBILE */}
       <nav className="lg:hidden fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-between items-center h-16 px-4 z-30 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
         {[
           { name: "Dashboard", path: "/dashboard", icon: MdSpaceDashboard },

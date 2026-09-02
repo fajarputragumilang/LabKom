@@ -5,11 +5,17 @@ export async function POST() {
   try {
     const cookieStore = cookies();
 
-    // PERBAIKAN: Gunakan nama cookie yang sama persis dengan di middleware.js
-    cookieStore.delete("session_user");
+    // PERBAIKAN: Hapus cookie secara agresif dengan menimpa masa aktifnya ke masa lalu
+    cookieStore.set("session_user", "", {
+      path: "/", // Wajib: agar terhapus di seluruh rute
+      expires: new Date(0), // Set waktu ke 1 Jan 1970
+      maxAge: 0,
+    });
+
+    cookieStore.delete("session_user"); // Lapis kedua penghapusan native
 
     return NextResponse.json(
-      { success: true, message: "Sesi berhasil dihapus" },
+      { success: true, message: "Sesi berhasil dihapus secara total" },
       { status: 200 },
     );
   } catch (error) {

@@ -34,26 +34,34 @@ export default function DashboardLayout({ children }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       try {
         const userData = localStorage.getItem("user");
         if (userData) {
           setUser(JSON.parse(userData));
+          setIsLoading(false);
         } else {
-          // Gunakan replace agar history browser tidak menumpuk
-          router.replace("/login");
+          // LOOP BREAKER:
+          // Jika sampai ke sini, berarti Middleware melihat Cookie masih ada,
+          // tapi LocalStorage sudah hilang. Kita harus paksa hapus cookie di server!
+          console.warn(
+            "Desinkronisasi sesi terdeteksi. Memaksa pembersihan cookie...",
+          );
+          await fetch("/api/logout", { method: "POST" });
+
+          // Gunakan window.location.href untuk hard-reset browser (mencegah cache loop)
+          window.location.href = "/login";
         }
       } catch (error) {
         console.error("Gagal mem-parsing data user", error);
         localStorage.removeItem("user");
-        router.replace("/login");
-      } finally {
-        setIsLoading(false); // Matikan loading setelah pengecekan selesai
+        await fetch("/api/logout", { method: "POST" });
+        window.location.href = "/login";
       }
     };
 
     checkAuth();
-  }, [router]);
+  }, []); // Hapus 'router' dari array dependency agar tidak memicu re-render tak berujung
 
   const handleLogout = async () => {
     setIsLoading(true); // Tampilkan loading saat proses logout

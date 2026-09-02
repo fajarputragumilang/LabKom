@@ -5,14 +5,15 @@ export async function POST() {
   try {
     const cookieStore = cookies();
 
-    // PERBAIKAN: Hapus cookie secara agresif dengan menimpa masa aktifnya ke masa lalu
+    // Hapus cookie secara agresif dengan menimpa masa aktifnya ke masa lalu
     cookieStore.set("session_user", "", {
       path: "/", // Wajib: agar terhapus di seluruh rute
       expires: new Date(0), // Set waktu ke 1 Jan 1970
       maxAge: 0,
     });
 
-    cookieStore.delete("session_user"); // Lapis kedua penghapusan native
+    // Lapis kedua penghapusan native
+    cookieStore.delete("session_user");
 
     return NextResponse.json(
       { success: true, message: "Sesi berhasil dihapus secara total" },
